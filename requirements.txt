@@ -1,0 +1,14 @@
+streamlit
+pandas
+scikit-learn
+matplotlib
+seaborn
+transformers
+tensorflow
+imbalanced-learn
+torch
+numpy
+tensorflow
+tensorflow-text
+tensorflow_hub
+scikit-learn
