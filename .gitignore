@@ -1,5 +1,11 @@
+# .gitignore
+.env
 .venv/
 __pycache__/
-*.pyc
+*.pkl
+*.h5
+*.pt
+*.dll
+*.pyd
 .DS_Store
-.ipynb_checkpoints/
+*.log
