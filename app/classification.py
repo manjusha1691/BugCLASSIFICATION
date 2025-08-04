@@ -20,15 +20,15 @@ import os
 import shutil
 import tensorflow as tf
 import tensorflow_hub as hub
-import tensorflow_text as text
+
 #Libraries for Model Generation
 from transformers import logging
 logging.set_verbosity_error()
 
 from transformers import BertTokenizer, TFBertModel, TFBertForSequenceClassification
 from transformers import BertConfig
-from transformers import TFDistilBertForSequenceClassification, DistilBertTokenizer
-from tensorflow.keras.callbacks import EarlyStopping, ReduceLROnPlateau
+from keras.callbacks import EarlyStopping, ReduceLROnPlateau
+
 
 
 """Method to over sample the data to balance the labels of teh data set and classify the data Correctly"""
@@ -67,8 +67,21 @@ def oversample_text_data(X, y, random_state=42):
 def tokenize_data(X, y):
     tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
     encodings = tokenizer(list(X), truncation=True, padding=True, max_length=128)
-    dataset = tf.data.Dataset.from_tensor_slices((dict(encodings), y))
+
+    # Convert to TensorFlow tensors
+    input_ids = tf.convert_to_tensor(encodings['input_ids'])
+    attention_mask = tf.convert_to_tensor(encodings['attention_mask'])
+    y_tensor = tf.convert_to_tensor(y)
+
+    dataset = tf.data.Dataset.from_tensor_slices((
+        {
+            'input_ids': input_ids,
+            'attention_mask': attention_mask
+        },
+        y_tensor
+    ))
     return dataset
+
 
 # ========== Focal Loss ==========
 def focal_loss(gamma=2.0, alpha=0.25):
@@ -86,20 +99,23 @@ def focal_loss(gamma=2.0, alpha=0.25):
 """
 Method to Train the classifier , fine tune the model
 """
-def train_bert_classifier(X_train, y_train, X_test, y_test, num_labels, batch_size=32, epochs=5):
+def train_bert_classifier(X_train, y_train, X_test, y_test, num_labels, batch_size=32, epochs=2):
 
     train_dataset = tokenize_data(X_train, y_train)
     test_dataset = tokenize_data(X_test, y_test)
 
-    train_dataset = train_dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+   
+    
+    train_dataset = train_dataset.shuffle(len(y_train)).batch(batch_size).prefetch(tf.data.AUTOTUNE)
     test_dataset = test_dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
 
     # Load model and config
     config = BertConfig.from_pretrained('bert-base-uncased', num_labels=num_labels)
     model = TFBertForSequenceClassification.from_pretrained('bert-base-uncased', config=config)
 
     # Compile model
-    optimizer = tf.keras.optimizers.AdamW(learning_rate=5e-5)
+    optimizer = tf.keras.optimizers.Adam(learning_rate=5e-5)
     loss = focal_loss(gamma=2.0, alpha=0.25)
     metric = tf.keras.metrics.SparseCategoricalAccuracy(name='accuracy')
 
@@ -112,7 +128,30 @@ def train_bert_classifier(X_train, y_train, X_test, y_test, num_labels, batch_si
     # Train
     finetuned_model = model.fit(train_dataset,validation_data=test_dataset,epochs=epochs,callbacks=[early_stopping, lr_scheduler])
 
+    # Save model and tokenizer for reusing it 
+    my_modelpath = "models/bert_bug_classifier"
+    os.makedirs(my_modelpath, exist_ok=True)
+    model.save_pretrained(my_modelpath)
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+    tokenizer.save_pretrained(my_modelpath)
+
     return model, finetuned_model
+
+def prepare_data_for_prediction(X, y, tokenizer, batch_size=32):
+    encodings = tokenizer(list(X), truncation=True, padding=True, max_length=128)
+    input_ids = tf.convert_to_tensor(encodings['input_ids'])
+    attention_mask = tf.convert_to_tensor(encodings['attention_mask'])
+    y_tensor = tf.convert_to_tensor(y)
+
+    dataset = tf.data.Dataset.from_tensor_slices((
+        {
+            'input_ids': input_ids,
+            'attention_mask': attention_mask
+        },
+        y_tensor
+    ))
+    return dataset.batch(batch_size).prefetch(tf.data.AUTOTUNE)
+
 
 """ Method to predict the labels of teh test datset"""
 
