@@ -34,12 +34,6 @@ zip_path = "../data/bugsdata.zip"
 bug_data_dict = load_bug_data_from_zip(zip_path)
 
 
-# Display the available keys (only once)
-if "printed_keys" not in st.session_state:
-    st.markdown("#### Available Bug Data Keys")
-    for i, key in enumerate(bug_data_dict.keys(), 1):
-        st.write(f"{i}. {key}")
-    st.session_state["printed_keys"] = True
 
 # Display dropdown to select a dataset
 dataset_names = list(bug_data_dict.keys())
@@ -52,7 +46,6 @@ data = prepareData(bug_data_dict[selected_dataset_name])
 @st.cache_resource
 def load_finetuned_model():
     model_path = "../models/bert_bug_classifier"
-    st.write("Current working directory:", os.getcwd())
     if not os.path.exists(model_path):
         return None, None  # No saved model yet
     model = TFBertForSequenceClassification.from_pretrained(model_path)
@@ -61,7 +54,7 @@ def load_finetuned_model():
 
 
 eda_tab, classifier_tab = st.tabs([" Bug Data Analysis", "Classification"])
-
+### ------------------------EDA TAB -----------------------------------------
 with eda_tab:
     st.header("Bug Data Analysis")
     eda_options = [
@@ -92,11 +85,20 @@ with eda_tab:
     elif choice == eda_options[5]:
         fig = priority_vs_resolved(data)
         st.pyplot(fig)
-
+# ------- CLASSIFICATION TAB
 with classifier_tab:
-    st.header("Bug CLassifier with  BERT Model")
 
-    if st.button("Start Classification"):
+    st.header("Bug CLassifier with  BERT Model")
+    
+    bug_description = st.text_area("Enter bug description:")
+
+    if st.button("Classify"):
+       
+       #If user does not entrr anything and click on Classify, then Warn the user to entr some text
+       if bug_description.strip() == "":
+            st.warning("Please enter a bug description.")
+       else:
+
         X = data['Synopsis']
         y = data['Priority']
 
@@ -104,41 +106,42 @@ with classifier_tab:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
 
-        # Balance dataset
-        X_balanced, y_balanced = oversample_text_data(X, y_encoded)
-
-        # Split train/test
-        X_train, X_test, y_train, y_test = train_test_split(
-            X_balanced, y_balanced, test_size=0.2, stratify=y_balanced, random_state=42
-        )
-
+        # Load the tokeniser and Model
         model, tokenizer = load_finetuned_model()
 
+       
+        # If Model is not loaded or present, then do the training here and Classify here
+
         if model is None or tokenizer is None:
-            st.info("No saved model found. Training model now... (CPU training can take time)")
+            
+            st.info("No saved model found. Training model now... , Please wait" )
+             # Balance dataset
+            X_balanced, y_balanced = oversample_text_data(X, y_encoded)
+            # Split train/test
+            X_train, X_test, y_train, y_test = train_test_split(X_balanced, y_balanced, test_size=0.2, stratify=y_balanced, random_state=42)
             model, _ = train_bert_classifier(X_train, y_train, X_test, y_test, num_labels=len(le.classes_))
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
             st.success("Training complete and model saved.")
-        else:
-            st.success("Loaded fine-tuned model from disk.")
+        
+        # Predict on input bug description
+        inputs = tokenizer(bug_description, return_tensors="tf", truncation=True, padding=True, max_length=128)
+        outputs = model(inputs)
+        probs = tf.nn.softmax(outputs.logits, axis=1).numpy().flatten()
+        pred_index = np.argmax(probs)
+        pred_label = le.inverse_transform([pred_index])[0]
 
-        # Prepare test data for prediction
-        test_dataset = prepare_data_for_prediction(X_test, y_test, tokenizer)
+        st.success(f"Predicted Priority: **{pred_label}** ({probs[pred_index]:.2%} confidence)")
 
-        # Predict
-        probs = model.predict(test_dataset)
-        y_pred = np.argmax(probs.logits, axis=1)
+        # Show all class probabilities
+        labels = le.inverse_transform(np.arange(len(probs)))
+        conf_df = pd.DataFrame({
+            "Priority": labels,
+            "Confidence": probs
+        }).sort_values("Confidence", ascending=False)
 
-        # Show classification report
-        report = classification_report(y_test, y_pred, target_names=le.classes_, output_dict=True)
-        st.write("### Classification Report")
-        st.dataframe(pd.DataFrame(report).transpose())
+        st.dataframe(conf_df.style.format({"Confidence": "{:.2%}"}))
 
-        # Confusion Matrix plot
-        st.write("### Confusion Matrix")
-        plot_confusion_matrix(y_test, y_pred, class_labels=le.classes_)
-
-
+           
 
 
 
