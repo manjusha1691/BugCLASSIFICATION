@@ -42,49 +42,64 @@ selected_dataset_name = st.sidebar.selectbox("Select Dataset", dataset_names)
 # Prepare the selected dataset
 data = prepareData(bug_data_dict[selected_dataset_name])
 
-#Method to download and Load Model
+
+# -------------------- Model Download/Extraction --------------------
+MODEL_FILE_ID = "1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW"
+MODEL_ZIP_PATH = Path("models/bert_bug_classifier.zip")
+MODEL_DIR = Path("models/bert_bug_classifier")
+
+
 @st.cache_resource
 def download_and_extract_model_from_drive():
-    ##Downloads a zipped BERT model from Google Drive and extracts it to the 'models' directory.
-    
+    """Download zipped BERT model from Google Drive & extract."""
 
-    file_id = '1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW'  # Your Google Drive File ID
-    zip_output_path = Path('models/bert_bug_classifier.zip')
-    extract_dir = Path('models/bert_bug_classifier')
+    MODEL_ZIP_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-    # Download and extract only if the model directory doesn't already exist
-    if not extract_dir.exists():
-        zip_output_path.parent.mkdir(parents=True, exist_ok=True)
+    if not MODEL_ZIP_PATH.exists():
+        st.write("Downloading model from Google Drive...")
+        gdown.download(f"https://drive.google.com/uc?id={MODEL_FILE_ID}", str(MODEL_ZIP_PATH), quiet=False)
 
-        # Download zip if not already present
-        if not zip_output_path.exists():
-            gdown.download(f'https://drive.google.com/uc?id={file_id}', str(zip_output_path), quiet=False)
+       # Extract if not already extracted
+    if not MODEL_DIR.exists():
+        st.write("📦 Extracting model zip...")
+        with zipfile.ZipFile(MODEL_ZIP_PATH, "r") as zip_ref:
+            zip_ref.extractall(MODEL_ZIP_PATH.parent)
 
-        # Extract zip
-        with zipfile.ZipFile(str(zip_output_path), 'r') as zip_ref:
-            zip_ref.extractall(str(extract_dir))
-            # After extraction, check if there is a nested folder
-        extracted_contents = list(extract_dir.iterdir())
-        st.write("Extracted folder contents:", [p.name for p in extracted_contents])
-        if len(extracted_contents) == 1 and extracted_contents[0].is_dir():
-            # If yes, update extract_dir to this nested folder
-            extract_dir = extracted_contents[0]
+    # Now find the folder that actually contains config.json
+    def find_model_dir(base_path: Path):
+        for root, dirs, files in os.walk(base_path):
+            if "config.json" in files and ("tf_model.h5" in files or "pytorch_model.bin" in files):
+                return Path(root)
+        return None
 
+    model_folder = find_model_dir(MODEL_ZIP_PATH.parent)
+    if model_folder:
+        st.write(f"Model files found in: {model_folder}")
+        st.write("Files:", os.listdir(model_folder))
+        return model_folder
+    else:
+        st.error(" Could not find a valid model folder with config.json and model weights.")
+        return None
 
-    return extract_dir
-
-#Loads the fine-tuned BERT model and tokenizer from the extracted model directory.
 @st.cache_resource
 def load_finetuned_model():
+    """Load fine-tuned BERT model & tokenizer."""
     model_dir = download_and_extract_model_from_drive()
-    # Debug: List files in model directory after extraction
-    import os
-    st.write("Model files after extraction:", os.listdir(str(model_dir)))
+
     if not model_dir.exists():
+        st.error(f"❌ Model directory not found: {model_dir}")
         return None, None
-    model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
-    tokenizer = BertTokenizer.from_pretrained(str(model_dir))
-    return model, tokenizer
+
+    st.write("📂 Model files found:", os.listdir(str(model_dir)))
+
+    try:
+        model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
+        tokenizer = BertTokenizer.from_pretrained(str(model_dir))
+        st.success("✅ Model and tokenizer loaded successfully!")
+        return model, tokenizer
+    except Exception as e:
+        st.error(f"❌ Error loading model: {e}")
+        return None, None
 
 
 #Method to save model and tokeniser
@@ -155,7 +170,7 @@ with classifier_tab:
         # If Model is not loaded or present, then do the training here and Classify here
 
         if model is None or tokenizer is None:
-            st.error("❌ Model could not be loaded from Google Drive. Please ensure the model zip is correct.")
+            st.error(" Model could not be loaded from Google Drive. Please ensure the model zip is correct.")
             st.stop()
         
         # Predict on input bug description
