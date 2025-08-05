@@ -45,10 +45,8 @@ data = prepareData(bug_data_dict[selected_dataset_name])
 #Method to download and Load Model
 @st.cache_resource
 def download_and_extract_model_from_drive():
-    ###
-    Downloads a zipped BERT model from Google Drive and extracts it to the 'models' directory.
-    Uses caching to avoid re-downloading on each run.
-    ###
+    ##Downloads a zipped BERT model from Google Drive and extracts it to the 'models' directory.
+    
 
     file_id = '1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW'  # Your Google Drive File ID
     zip_output_path = Path('models/bert_bug_classifier.zip')
