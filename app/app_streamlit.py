@@ -3,7 +3,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-
+import requests
+from pathlib import Path
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
@@ -42,14 +43,38 @@ selected_dataset_name = st.sidebar.selectbox("Select Dataset", dataset_names)
 # Prepare the selected dataset
 data = prepareData(bug_data_dict[selected_dataset_name])
 
+#Method to download the model from drive 
+def download_file_from_google_drive(url, dest_path):
+    if dest_path.exists():
+        return
+    with requests.get(url, stream=True) as r:
+        r.raise_for_status()
+        with open(dest_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
+                f.write(chunk)
 
 @st.cache_resource
 def load_finetuned_model():
-    model_path = "models/bert_bug_classifier"
-    if not os.path.exists(model_path):
-        return None, None  # No saved model yet
-    model = TFBertForSequenceClassification.from_pretrained(model_path)
-    tokenizer = BertTokenizer.from_pretrained(model_path)
+    model_dir = Path("models/bert_bug_classifier")
+    zip_path = Path("models/bert_bug_classifier.zip")
+
+    # Your Google Drive direct download link for the zipped model
+    gdrive_url = "https://drive.google.com/uc?export=download&id=1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW"
+
+    # Download the zipped model if it doesn't exist locally
+    download_file_from_google_drive(gdrive_url, zip_path)
+
+    # Extract the zip if the model folder doesn't exist
+    if not model_dir.exists() and zip_path.exists():
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
+            zip_ref.extractall(model_dir.parent)
+        zip_path.unlink()  # delete zip after extraction
+
+    if not model_dir.exists():
+        return None, None
+
+    model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
+    tokenizer = BertTokenizer.from_pretrained(str(model_dir))
     return model, tokenizer
 
 

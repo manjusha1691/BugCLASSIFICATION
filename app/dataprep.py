@@ -47,11 +47,6 @@ def load_bug_data_from_zip(zip_path):
                     df = pd.read_csv(f)
                     allbugs_data[folder_name] = df
 
-    # Display available keys
-    keys = list(allbugs_data.keys())
-    print("Available bug data keys:")
-    for i, key in enumerate(keys, 1):
-        print(f"{i}. {key}")
-    
+  
     return allbugs_data
 
