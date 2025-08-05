@@ -8,4 +8,5 @@ streamlit
 imbalanced-learn
 matplotlib
 seaborn
+gdown
 # add other needed packages

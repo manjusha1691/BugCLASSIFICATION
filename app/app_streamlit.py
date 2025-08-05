@@ -3,18 +3,18 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-import requests
+import gdown
+import zipfile
 from pathlib import Path
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
-from transformers import (TFBertForSequenceClassification,
-                           BertTokenizer )
+from transformers import TFBertForSequenceClassification, BertTokenizer
 from sklearn.metrics import classification_report
-import zipfile
-# Load the data
-from dataprep import load_bug_data_from_zip, prepareData
 
+# Load utility functions for data processing and visualization
+#Load data
+from dataprep import load_bug_data_from_zip, prepareData
 #Import methods from eda file
 from bugdata_eda import (calculateAvgIssuePeryear,
                               issues_per_year,
@@ -28,21 +28,12 @@ from classification import (train_bert_classifier,
                                   predict_testdata, 
                                   plot_confusion_matrix,
                                    plot_training_history, prepare_data_for_prediction)
-#Bugs data file path debug
+##------------Load the bug data set
 zip_path = Path("data/bugsdata.zip")
-st.write(f"Looking for zip at: {zip_path.resolve()}")
-st.write(f"Zip exists? {zip_path.exists()}")
-
 if not zip_path.exists():
     st.error("Zip file not found!")
 else:
     bug_data_dict = load_bug_data_from_zip(zip_path)
-
-#zip_path = "data/bugsdata.zip"
-# Load data from the zip file (assumes it returns a dictionary of DataFrames)
-bug_data_dict = load_bug_data_from_zip(zip_path)
-
-
 
 # Display dropdown to select a dataset
 dataset_names = list(bug_data_dict.keys())
@@ -51,46 +42,51 @@ selected_dataset_name = st.sidebar.selectbox("Select Dataset", dataset_names)
 # Prepare the selected dataset
 data = prepareData(bug_data_dict[selected_dataset_name])
 
-#Method to download the model from drive 
-def download_file_from_google_drive(url, dest_path):
-    if dest_path.exists():
-        return
-    with requests.get(url, stream=True) as r:
-        r.raise_for_status()
-        with open(dest_path, "wb") as f:
-            for chunk in r.iter_content(chunk_size=8192):
-                f.write(chunk)
+#Method to download and Load Model
+@st.cache_resource
+def download_and_extract_model_from_drive():
+    ###
+    Downloads a zipped BERT model from Google Drive and extracts it to the 'models' directory.
+    Uses caching to avoid re-downloading on each run.
+    ###
+
+    file_id = '1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW'  # Your Google Drive File ID
+    zip_output_path = Path('models/bert_bug_classifier.zip')
+    extract_dir = Path('models/bert_bug_classifier')
+
+    # Download and extract only if the model directory doesn't already exist
+    if not extract_dir.exists():
+        zip_output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # Download zip if not already present
+        if not zip_output_path.exists():
+            gdown.download(f'https://drive.google.com/uc?id={file_id}', str(zip_output_path), quiet=False)
+
+        # Extract zip
+        with zipfile.ZipFile(str(zip_output_path), 'r') as zip_ref:
+            zip_ref.extractall(str(extract_dir))
+
+    return extract_dir
+
+#Loads the fine-tuned BERT model and tokenizer from the extracted model directory.
+@st.cache_resource
+def load_finetuned_model():
+    model_dir = download_and_extract_model_from_drive()
+    if not model_dir.exists():
+        return None, None
+    model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
+    tokenizer = BertTokenizer.from_pretrained(str(model_dir))
+    return model, tokenizer
+
+
+#Method to save model and tokeniser
 def save_model_and_tokenizer(model, tokenizer, save_path="models/bert_bug_classifier"):
     save_path = Path(save_path)
     save_path.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
     model.save_pretrained(str(save_path))
     tokenizer.save_pretrained(str(save_path))
 
-@st.cache_resource
-def load_finetuned_model():
-    model_dir = Path("models/bert_bug_classifier")
-    zip_path = Path("models/bert_bug_classifier_model.zip")
-
-    # Your Google Drive direct download link for the zipped model
-    gdrive_url = "https://drive.google.com/uc?export=download&id=1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW"
-
-    # Download the zipped model if it doesn't exist locally
-    download_file_from_google_drive(gdrive_url, zip_path)
-
-    # Extract the zip if the model folder doesn't exist
-    if not model_dir.exists() and zip_path.exists():
-        with zipfile.ZipFile(zip_path, "r") as zip_ref:
-            zip_ref.extractall(model_dir.parent)
-        zip_path.unlink()  # delete zip after extraction
-
-    if not model_dir.exists():
-        return None, None
-
-    model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
-    tokenizer = BertTokenizer.from_pretrained(str(model_dir))
-    return model, tokenizer
-
-
+#Tabls to be dispalyed in StreamlitApp
 eda_tab, classifier_tab = st.tabs([" Bug Data Analysis", "Classification"])
 ### ------------------------EDA TAB -----------------------------------------
 with eda_tab:
@@ -136,7 +132,7 @@ with classifier_tab:
        if bug_description.strip() == "":
             st.warning("Please enter a bug description.")
        else:
-
+        #Prepare Training data for label encoder
         X = data['Synopsis']
         y = data['Priority']
 
@@ -144,27 +140,19 @@ with classifier_tab:
         le = LabelEncoder()
         y_encoded = le.fit_transform(y)
 
-        # Load the tokeniser and Model
-        model, tokenizer = load_finetuned_model()
-
-       
+         # Load the fine-tuned model and tokenizer with progress feedback
+        with st.spinner("Loading BERT model..."):
+            model, tokenizer = load_finetuned_model()
+    
         # If Model is not loaded or present, then do the training here and Classify here
 
         if model is None or tokenizer is None:
-            
-            st.info("No saved model found. Training model now... , Please wait" )
-             # Balance dataset
-            X_balanced, y_balanced = oversample_text_data(X, y_encoded)
-            # Split train/test
-            X_train, X_test, y_train, y_test = train_test_split(X_balanced, y_balanced, test_size=0.2, stratify=y_balanced, random_state=42)
-            model, _ = train_bert_classifier(X_train, y_train, X_test, y_test, num_labels=len(le.classes_))
-            tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-             # Save model and tokenizer
-            save_model_and_tokenizer(model, tokenizer)
-            st.success("Training complete and model saved.")
+            st.error("❌ Model could not be loaded from Google Drive. Please ensure the model zip is correct.")
+            st.stop()
         
         # Predict on input bug description
         inputs = tokenizer(bug_description, return_tensors="tf", truncation=True, padding=True, max_length=128)
+        #Predict with the model
         outputs = model(inputs)
         probs = tf.nn.softmax(outputs.logits, axis=1).numpy().flatten()
         pred_index = np.argmax(probs)
