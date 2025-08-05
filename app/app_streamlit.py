@@ -11,7 +11,7 @@ from sklearn.preprocessing import LabelEncoder
 from transformers import (TFBertForSequenceClassification,
                            BertTokenizer )
 from sklearn.metrics import classification_report
-
+import zipfile
 # Load the data
 from dataprep import load_bug_data_from_zip, prepareData
 
@@ -56,7 +56,7 @@ def download_file_from_google_drive(url, dest_path):
 @st.cache_resource
 def load_finetuned_model():
     model_dir = Path("models/bert_bug_classifier")
-    zip_path = Path("models/bert_bug_classifier.zip")
+    zip_path = Path("models/bert_bug_classifier_model.zip")
 
     # Your Google Drive direct download link for the zipped model
     gdrive_url = "https://drive.google.com/uc?export=download&id=1hyUdeyxhwP7zibqd1Klz18Vrbw34JxpW"
