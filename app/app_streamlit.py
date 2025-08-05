@@ -29,7 +29,7 @@ from classification import (train_bert_classifier,
                                    plot_training_history, prepare_data_for_prediction)
 
 # Bugsdata file path
-zip_path = "/data/bugsdata.zip"
+zip_path = "data/bugsdata.zip"
 # Load data from the zip file (assumes it returns a dictionary of DataFrames)
 bug_data_dict = load_bug_data_from_zip(zip_path)
 
