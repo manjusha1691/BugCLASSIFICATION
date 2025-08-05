@@ -70,6 +70,9 @@ def download_and_extract_model_from_drive():
 @st.cache_resource
 def load_finetuned_model():
     model_dir = download_and_extract_model_from_drive()
+    # Debug: List files in model directory after extraction
+    import os
+    st.write("Model files after extraction:", os.listdir(str(model_dir)))
     if not model_dir.exists():
         return None, None
     model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
