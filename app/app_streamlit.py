@@ -88,8 +88,6 @@ def load_finetuned_model():
         st.error(f"❌ Model directory not found: {model_dir}")
         return None, None
 
-    st.write("📂 Model files found:", os.listdir(str(model_dir)))
-
     try:
         model = TFBertForSequenceClassification.from_pretrained(str(model_dir))
         tokenizer = BertTokenizer.from_pretrained(str(model_dir))
