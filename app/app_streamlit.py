@@ -45,7 +45,7 @@ data = prepareData(bug_data_dict[selected_dataset_name])
 
 @st.cache_resource
 def load_finetuned_model():
-    model_path = "../models/bert_bug_classifier"
+    model_path = "models/bert_bug_classifier"
     if not os.path.exists(model_path):
         return None, None  # No saved model yet
     model = TFBertForSequenceClassification.from_pretrained(model_path)
