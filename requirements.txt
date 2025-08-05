@@ -1,10 +1,10 @@
 tensorflow
-transformers==4.26.1
-numpy==1.23.5
-pandas==2.3.1
-scikit-learn==1.6.1
-streamlit==1.47.1
-imbalanced-learn==0.13.0
-matplotlib==3.10.5
-seaborn==0.13.2
+transformers
+numpy
+pandas
+scikit-learn
+streamlit
+imbalanced-learn
+matplotlib
+seaborn
 # add other needed packages
