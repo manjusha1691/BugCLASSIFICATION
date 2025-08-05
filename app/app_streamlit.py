@@ -28,9 +28,17 @@ from classification import (train_bert_classifier,
                                   predict_testdata, 
                                   plot_confusion_matrix,
                                    plot_training_history, prepare_data_for_prediction)
+#Bugs data file path debug
+zip_path = Path("data/bugsdata.zip")
+st.write(f"Looking for zip at: {zip_path.resolve()}")
+st.write(f"Zip exists? {zip_path.exists()}")
 
-# Bugsdata file path
-zip_path = "data/bugsdata.zip"
+if not zip_path.exists():
+    st.error("Zip file not found!")
+else:
+    bug_data_dict = load_bug_data_from_zip(zip_path)
+
+#zip_path = "data/bugsdata.zip"
 # Load data from the zip file (assumes it returns a dictionary of DataFrames)
 bug_data_dict = load_bug_data_from_zip(zip_path)
 
