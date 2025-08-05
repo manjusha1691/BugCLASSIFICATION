@@ -74,8 +74,6 @@ def download_and_extract_model_from_drive():
 
     model_folder = find_model_dir(MODEL_ZIP_PATH.parent)
     if model_folder:
-        st.write(f"Model files found in: {model_folder}")
-        st.write("Files:", os.listdir(model_folder))
         return model_folder
     else:
         st.error(" Could not find a valid model folder with config.json and model weights.")
@@ -181,7 +179,7 @@ with classifier_tab:
         pred_index = np.argmax(probs)
         pred_label = le.inverse_transform([pred_index])[0]
 
-        st.success(f"Predicted Priority: **{pred_label}** ({probs[pred_index]:.2%} confidence)")
+        st.success(f"Predicted Priority: **{pred_label}**")
 
         # Show all class probabilities
         #labels = le.inverse_transform(np.arange(len(probs)))
