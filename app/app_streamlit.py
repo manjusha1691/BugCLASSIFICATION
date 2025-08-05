@@ -63,6 +63,12 @@ def download_and_extract_model_from_drive():
         # Extract zip
         with zipfile.ZipFile(str(zip_output_path), 'r') as zip_ref:
             zip_ref.extractall(str(extract_dir))
+            # After extraction, check if there is a nested folder
+        extracted_contents = list(extract_dir.iterdir())
+        if len(extracted_contents) == 1 and extracted_contents[0].is_dir():
+            # If yes, update extract_dir to this nested folder
+            extract_dir = extracted_contents[0]
+
 
     return extract_dir
 
