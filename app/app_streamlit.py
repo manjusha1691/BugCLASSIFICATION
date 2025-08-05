@@ -65,6 +65,7 @@ def download_and_extract_model_from_drive():
             zip_ref.extractall(str(extract_dir))
             # After extraction, check if there is a nested folder
         extracted_contents = list(extract_dir.iterdir())
+        st.write("Extracted folder contents:", [p.name for p in extracted_contents])
         if len(extracted_contents) == 1 and extracted_contents[0].is_dir():
             # If yes, update extract_dir to this nested folder
             extract_dir = extracted_contents[0]
