@@ -52,6 +52,11 @@ def download_file_from_google_drive(url, dest_path):
         with open(dest_path, "wb") as f:
             for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
+def save_model_and_tokenizer(model, tokenizer, save_path="models/bert_bug_classifier"):
+    save_path = Path(save_path)
+    save_path.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
+    model.save_pretrained(str(save_path))
+    tokenizer.save_pretrained(str(save_path))
 
 @st.cache_resource
 def load_finetuned_model():
@@ -146,6 +151,8 @@ with classifier_tab:
             X_train, X_test, y_train, y_test = train_test_split(X_balanced, y_balanced, test_size=0.2, stratify=y_balanced, random_state=42)
             model, _ = train_bert_classifier(X_train, y_train, X_test, y_test, num_labels=len(le.classes_))
             tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+             # Save model and tokenizer
+            save_model_and_tokenizer(model, tokenizer)
             st.success("Training complete and model saved.")
         
         # Predict on input bug description
@@ -158,13 +165,13 @@ with classifier_tab:
         st.success(f"Predicted Priority: **{pred_label}** ({probs[pred_index]:.2%} confidence)")
 
         # Show all class probabilities
-        labels = le.inverse_transform(np.arange(len(probs)))
-        conf_df = pd.DataFrame({
-            "Priority": labels,
-            "Confidence": probs
-        }).sort_values("Confidence", ascending=False)
+        #labels = le.inverse_transform(np.arange(len(probs)))
+        #conf_df = pd.DataFrame({
+           # "Priority": labels,
+            #"Confidence": probs
+        #}).sort_values("Confidence", ascending=False)
 
-        st.dataframe(conf_df.style.format({"Confidence": "{:.2%}"}))
+        #st.dataframe(conf_df.style.format({"Confidence": "{:.2%}"}))
 
            
 
