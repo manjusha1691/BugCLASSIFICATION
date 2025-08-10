@@ -33,7 +33,7 @@
 - Real-time prediction interface via Streamlit
 - Downloadable from Google Drive for large model files
 
- # ** Why BERT  for Bug Classification**
+ ###  Why BERT  for Bug Classification
 - BERT is used in this project because it excels at understanding the context of words in bug report descriptions, which often contain complex and technical language.
 - Its bidirectional attention mechanism helps capture nuanced meanings, making it ideal for accurately classifying bug priorities.
 -  By fine-tuning BERT on the bug report dataset, we can leverage its pre-trained language capabilities to improve classification accuracy.
@@ -117,7 +117,7 @@ This file contains methods for training the BERT classifier, oversampling the da
    - **Purpose**: Makes predictions on the test data using the fine-tuned BERT model.
    - **Output**: Returns the predicted labels for the test dataset.
 
-- ##  `app.py` - Main file
+## 4.  `app.py` - Main file
 This file is the entry point of the Streamlit application, handling data visualization, model loading, and classification functionalities. It allows users to explore bug report data, visualize EDA plots, and classify bug descriptions into priority levels using a fine-tuned BERT model.
 
 ### **Key Sections and Functions:**
