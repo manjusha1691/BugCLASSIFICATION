@@ -26,12 +26,6 @@
 - Real-time prediction interface via Streamlit
 - Downloadable from Google Drive for large model files
 
-#  Tech Stack
-- Python, TensorFlow, Transformers (HuggingFace)
-- scikit-learn, imbalanced-learn
-- Streamlit, Seaborn, Matplotlib
-- Google Drive integration with gdown
-
 #  EDA Visualizations
 - Bug trends per year
 - Priority distribution
