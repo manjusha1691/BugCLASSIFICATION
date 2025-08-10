@@ -6,10 +6,10 @@
 
 
 **Motivation**
-In large-scale software development, efficiently managing and prioritizing bug reports is crucial. Manual classification of bugs can be time-consuming and prone to human error. It is important that each bug is classified correctly with its priority so that developers can address the most critical issues promptly. Without this prioritization, all bugs might be treated the same, potentially leading to important issues being ignored, or one bug being worked on while causing regression of another. By automating the classification process, development teams can focus on resolving high-priority bugs faster, improving software quality and user satisfaction.
+- In large-scale software development, efficiently managing and prioritizing bug reports is crucial. Manual classification of bugs can be time-consuming and prone to human error. It is important that each bug is classified correctly with its priority so that developers can address the most critical issues promptly. Without this prioritization, all bugs might be treated the same, potentially leading to important issues being ignored, or one bug being worked on while causing regression of another. By automating the classification process, development teams can focus on resolving high-priority bugs faster, improving software quality and user satisfaction.
 
 **Dataset**
--  The dataset used in this project is taken from repo  [bug database](https://github.com/av9ash/gitbugs)
+- The dataset used in this project is taken from repo  [bug database](https://github.com/av9ash/gitbugs)
 - Each dataset has many columns **Summary, ISSUEID, Status, Resolution, Priority, Created, Resolved, Affected Versions(Only for Hadoop Database), Description**
 
 
@@ -39,13 +39,13 @@ In large-scale software development, efficiently managing and prioritizing bug r
 -  By fine-tuning BERT on the bug report dataset, we can leverage its pre-trained language capabilities to improve classification accuracy.
 - This enables fast, reliable priority predictions for bug reports, helping developers focus on critical issues.
 
-# ##  Detailed Explanation of Files
+# Detailed Explanation of Files
 
 
-### 1. `dataprep.py`
+### 1. `dataprep.py`- Format the data as needed 
 This file contains methods for loading, cleaning, and preparing bug report data. It includes functions to load CSV files from a ZIP archive, preprocess the data for analysis, and format it for model training.
 
-#### **Key Functions:**
+## **Key Functions:**
 
 - **`prepareData(data)`**:
    - **Purpose**: Prepares the bug report data for analysis by:
@@ -61,8 +61,7 @@ This file contains methods for loading, cleaning, and preparing bug report data.
      - The dictionary keys are the folder names, and the values are the corresponding DataFrames.
    - **Output**: A dictionary containing DataFrames for each bug report dataset.
 
-## 2 EDA: Exploratory Data Analysis for Bug Reports 'bugdata_eda.py'
-
+## 2.  'bugdata_eda.py' - EDA: Exploratory Data Analysis for Bug Reports
 This file contains various functions to perform exploratory data analysis (EDA) on the bug report dataset. The goal is to analyze key trends such as issue resolution time, issue creation by priority, and the relationship between resolved issues and priority. Below are the key functions:
 
 ### 1. **`calculateAvgIssuePeryear(data)`**
@@ -89,10 +88,10 @@ This file contains various functions to perform exploratory data analysis (EDA) 
    - **Purpose**: Analyzes the number of issues resolved by priority, comparing them to the total number of issues created.
    - **Output**: A bar plot displaying the number of resolved issues per priority.
 
-### 3. 'Classification Task' `classification.py`
+## 3. `classification.py`-  'Classification Task' 
 This file contains methods for training the BERT classifier, oversampling the data, and evaluating model performance. It includes functions for handling imbalanced datasets, training the model, and visualizing its performance.
 
-#### **Key Functions:**
+### **Key Functions:**
 
 - **`oversample_text_data(X, y, random_state=42)`**: 
    - **Purpose**: Balances the dataset by oversampling underrepresented classes using the `resample` method. This helps the model correctly classify each bug priority.
@@ -118,10 +117,10 @@ This file contains methods for training the BERT classifier, oversampling the da
    - **Purpose**: Makes predictions on the test data using the fine-tuned BERT model.
    - **Output**: Returns the predicted labels for the test dataset.
 
-- ## 📂 Main file-  `app.py`
+- ##  `app.py` - Main file
 This file is the entry point of the Streamlit application, handling data visualization, model loading, and classification functionalities. It allows users to explore bug report data, visualize EDA plots, and classify bug descriptions into priority levels using a fine-tuned BERT model.
 
-#### **Key Sections and Functions:**
+### **Key Sections and Functions:**
 
 - **Bug Data Loading & Preparation**:
    - **`load_bug_data_from_zip(zip_path)`**: Loads bug data from a ZIP file and prepares it for analysis.
@@ -142,7 +141,7 @@ This file is the entry point of the Streamlit application, handling data visuali
 This file integrates bug report analysis, model training, and interactive classification, making it easy for users to classify bug descriptions and visualize the underlying data.
 
 
-## 🛠Installation & Usage
+## Installation & Usage
 
 ### Prerequisites
 To run this project, you need the following:
@@ -167,4 +166,4 @@ The Bug Classification app is also deployed and accessible online.
 
 [Bug Classification with BERT - Live Demo](https://bugclassificationwithbert.streamlit.app/)
 
-https://bugclassificationwithbert.streamlit.app/
+
