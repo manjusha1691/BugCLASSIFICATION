@@ -59,6 +59,9 @@ To run this project, you need the following:
    streamlit run app.py
    Access the Application:
 After running the command, the application will open in your default web browser, where you can interact with the bug classification interface. 
+
+
+
 2. ** Deployed Application **
 
 The Bug Classification app is also deployed and accessible online.
