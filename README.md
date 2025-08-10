@@ -1,8 +1,9 @@
 # Bug Priority Classifier using BERT + Streamlit
 
-This project predicts the priority level of software bug reports using a fine-tuned BERT model.
-It features an interactive Streamlit app for EDA and live predictions. The dataset used in this project is taken from repo  [bug database](https://github.com/av9ash/gitbugs)
-Each dataset has many columns **Summary, ISSUEID, Status, Resolution, Priority, Created, Resolved, Affected Versions(Only for Hadoop Database), Description**
+- This project predicts the priority level of software bug reports using a fine-tuned BERT model.
+- It features an interactive Streamlit app for EDA and live predictions.
+-  The dataset used in this project is taken from repo  [bug database](https://github.com/av9ash/gitbugs)
+- Each dataset has many columns **Summary, ISSUEID, Status, Resolution, Priority, Created, Resolved, Affected Versions(Only for Hadoop Database), Description**
 
 
 | Columnn | Description |
